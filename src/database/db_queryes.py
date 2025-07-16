@@ -37,3 +37,36 @@ def get_expenses(db= Depends(get_db),start_date: date = None, end_date: date = N
     if end_date:
         query = query.filter(Finances.date <= end_date)
     return query.scalar() or 0
+
+
+class FinanceQueries:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def create_finance(self, finance_data: dict):
+        db_finance = Finances(**finance_data)
+        self.db.add(db_finance)
+        self.db.commit()
+        self.db.refresh(db_finance)
+        return db_finance
+
+    def update_finance(self, finance_id: int, update_data: dict):
+        db_finance = self.db.query(Finances).filter(Finances.id == finance_id).first()
+        if not db_finance:
+            return None
+
+        for key, value in update_data.items():
+            setattr(db_finance, key, value)
+
+        self.db.commit()
+        self.db.refresh(db_finance)
+        return db_finance
+
+    def delete_finance(self, finance_id: int):
+        db_finance = self.db.query(Finances).filter(Finances.id == finance_id).first()
+        if not db_finance:
+            return False
+
+        self.db.delete(db_finance)
+        self.db.commit()
+        return True
