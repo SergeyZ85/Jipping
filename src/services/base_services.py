@@ -2,8 +2,9 @@ from datetime import date
 
 from fastapi import Depends
 
-from src.database.db_queryes import get_total_people, get_people_by_date, get_income, get_expenses
+from src.database.db_queryes import get_total_people, get_people_by_date, get_income, get_expenses, FinanceQueries
 from src.database.engine import get_db
+from src.schemas.finances import FinanceUpdate, FinanceCreate
 
 
 def peoples_service(result:dict=Depends(get_total_people)):
@@ -26,3 +27,17 @@ def calculate_profit(
         "expenses": expenses,
         "profit": income - expenses
     }
+
+
+class FinanceService:
+    def __init__(self, db):
+        self.queries = FinanceQueries(db)
+
+    def create_finance_record(self, finance: FinanceCreate):
+        return self.queries.create_finance(finance.dict())
+
+    def update_finance_record(self, finance_id: int, updates: FinanceUpdate):
+        return self.queries.update_finance(finance_id, updates.dict(exclude_unset=True))
+
+    def delete_finance_record(self, finance_id: int):
+        return self.queries.delete_finance(finance_id)
