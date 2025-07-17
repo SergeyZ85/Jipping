@@ -19,6 +19,7 @@ services:
       retries: 5
 
   app:
+    image: ${DOCKERHUB_USERNAME:-jipping}/jipping-app:${IMAGE_TAG:-latest}
     build: .
     ports:
       - "8000:8000"
