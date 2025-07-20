@@ -10,25 +10,22 @@ from typing import Optional
 
 class FinanceCreate(BaseModel):
     date: date
-    amount: float
-    driver_salary: float
-    fuel: float
-    people_percent: float
-    entry_percent: float
+    people_count: int
+    income: float
+    expenses: float = 0
+    description: str = ""
 
 class FinanceUpdate(BaseModel):
     date: Optional[date] = None
-    amount: Optional[float] = None
-    driver_salary: Optional[float] = None
-    fuel: Optional[float] = None
-    people_percent: Optional[float] = None
-    entry_percent: Optional[float] = None
+    people_count: Optional[int] = None
+    income: Optional[float] = None
+    expenses: Optional[float] = None
+    description: Optional[str] = None
 
 class FinanceResponse(BaseModel):
     id: int
     date: date
-    amount: float
-    driver_salary: float
-    fuel: float
-    people_percent: float
-    entry_percent: float
+    people_count: int
+    income: float
+    expenses: float
+    description: str
