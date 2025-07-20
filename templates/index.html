@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jipping - Учет поездок</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            padding: 30px;
+        }
+        
+        .stat-card {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            text-align: center;
+            border-left: 4px solid #4facfe;
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #4facfe;
+            margin-bottom: 10px;
+        }
+        
+        .stat-label {
+            color: #6c757d;
+            font-size: 1rem;
+        }
+        
+        .trips-section {
+            padding: 30px;
+        }
+        
+        .section-title {
+            font-size: 1.8rem;
+            color: #333;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #4facfe;
+            padding-bottom: 10px;
+        }
+        
+        .trips-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .trips-table th {
+            background: #4facfe;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        .trips-table td {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .trips-table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .profit-positive {
+            color: #28a745;
+            font-weight: bold;
+        }
+        
+        .profit-negative {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+            font-style: italic;
+        }
+        
+        .add-trip-form {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-group label {
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .form-group input, .form-group select {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+        
+        .btn {
+            background: #4facfe;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        
+        .btn:hover {
+            background: #3a8bfe;
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚗 Jipping</h1>
+            <p>Система учета поездок и финансов</p>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number">{{ total_people }}</div>
+                <div class="stat-label">Всего пассажиров</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ total_trips }}</div>
+                <div class="stat-label">Всего поездок</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ total_income }}₽</div>
+                <div class="stat-label">Общий доход</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number profit-{{ 'positive' if total_profit >= 0 else 'negative' }}">
+                    {{ total_profit }}₽
+                </div>
+                <div class="stat-label">Общая прибыль</div>
+            </div>
+        </div>
+        
+        <div class="trips-section">
+            <h2 class="section-title">📋 История поездок</h2>
+            
+            {% if trips %}
+            <table class="trips-table">
+                <thead>
+                    <tr>
+                        <th>Дата</th>
+                        <th>Количество пассажиров</th>
+                        <th>Доход</th>
+                        <th>Расходы</th>
+                        <th>Прибыль</th>
+                        <th>Описание</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for trip in trips %}
+                    <tr>
+                        <td>{{ trip.date.strftime('%d.%m.%Y') if trip.date else 'N/A' }}</td>
+                        <td>{{ trip.people_count or 0 }}</td>
+                        <td>{{ trip.income or 0 }}₽</td>
+                        <td>{{ trip.expenses or 0 }}₽</td>
+                        <td class="profit-{{ 'positive' if (trip.income or 0) - (trip.expenses or 0) >= 0 else 'negative' }}">
+                            {{ (trip.income or 0) - (trip.expenses or 0) }}₽
+                        </td>
+                        <td>{{ trip.description or 'Без описания' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="no-data">
+                <p>Пока нет записей о поездках</p>
+            </div>
+            {% endif %}
+            
+            <div class="add-trip-form">
+                <h3>➕ Добавить новую поездку</h3>
+                <form method="POST" action="/" enctype="application/x-www-form-urlencoded">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="date">Дата:</label>
+                            <input type="date" id="date" name="date" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="people_count">Количество пассажиров:</label>
+                            <input type="number" id="people_count" name="people_count" min="1" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="income">Доход (₽):</label>
+                            <input type="number" id="income" name="income" min="0" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="expenses">Расходы (₽):</label>
+                            <input type="number" id="expenses" name="expenses" min="0" step="0.01" value="0">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="description">Описание:</label>
+                        <input type="text" id="description" name="description" placeholder="Краткое описание поездки">
+                    </div>
+                    <button type="submit" class="btn">Добавить поездку</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 

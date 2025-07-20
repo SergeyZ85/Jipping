@@ -1,6 +1,9 @@
 from datetime import date
+from sqlalchemy import text
 
-from fastapi import Depends
+from fastapi import Depends, Request
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 
 from src.database.db_queryes import get_total_people, get_people_by_date, get_income, get_expenses, FinanceQueries
 from src.database.engine import get_db
@@ -28,6 +31,30 @@ def calculate_profit(
         "profit": income - expenses
     }
 
+# Инициализируем Jinja2 шаблоны
+templates = Jinja2Templates(directory="templates")
+
+def html_service(request: Request, db=Depends(get_db)):
+    # Получаем все записи о финансах
+    trips = db.execute(text("SELECT * FROM finances ORDER BY date DESC")).fetchall()
+    
+    # Подсчитываем статистику
+    total_people = sum(trip.people_count for trip in trips if trip.people_count)
+    total_trips = len(trips)
+    total_income = sum(trip.income for trip in trips if trip.income)
+    total_expenses = sum(trip.expenses for trip in trips if trip.expenses)
+    total_profit = total_income - total_expenses
+    
+    # Возвращаем HTML страницу
+    return templates.TemplateResponse("index.html", {
+        "request": request,
+        "trips": trips,
+        "total_people": total_people,
+        "total_trips": total_trips,
+        "total_income": total_income,
+        "total_expenses": total_expenses,
+        "total_profit": total_profit
+    })
 
 class FinanceService:
     def __init__(self, db):

@@ -1,12 +1,13 @@
 from datetime import date
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request, Form
 from sqlalchemy.orm import Session
 from starlette import status
+from fastapi.responses import HTMLResponse, RedirectResponse
 
 from src.database.engine import get_db
 from src.schemas.finances import FinanceResponse, FinanceCreate, FinanceUpdate
-from src.services.base_services import peoples_service, people_by_date_service, calculate_profit, FinanceService
+from src.services.base_services import peoples_service, people_by_date_service, calculate_profit, FinanceService, html_service, templates
 
 router = APIRouter()
 
@@ -31,15 +32,38 @@ def get_profit(
 ):
     return profit_data
 
+@router.get("/", response_class=HTMLResponse)
+def get_finances(result = Depends(html_service)):
+    return result
 
-
-@router.post("/", response_model=FinanceResponse, status_code=status.HTTP_201_CREATED)
-def create_finance(
-    finance: FinanceCreate,
+@router.post("/", response_class=HTMLResponse)
+def create_finance_from_form(
+    date: str = Form(...),
+    people_count: int = Form(...),
+    income: float = Form(...),
+    expenses: float = Form(default=0),
+    description: str = Form(default=""),
     db: Session = Depends(get_db)
 ):
+    # Конвертируем строку даты в объект date
+    from datetime import datetime
+    trip_date = datetime.strptime(date, "%Y-%m-%d").date()
+    
+    # Создаем объект FinanceCreate
+    finance_data = FinanceCreate(
+        date=trip_date,
+        people_count=people_count,
+        income=income,
+        expenses=expenses,
+        description=description
+    )
+    
+    # Сохраняем в базу данных
     service = FinanceService(db)
-    return service.create_finance_record(finance)
+    service.create_finance_record(finance_data)
+    
+    # Перенаправляем обратно на главную страницу
+    return RedirectResponse(url="/", status_code=303)
 
 @router.patch("/{finance_id}", response_model=FinanceResponse)
 def update_finance(

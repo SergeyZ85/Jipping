@@ -18,7 +18,7 @@ def request_in_db(db: Session):
     return result
 
 def get_income(db= Depends(get_db),start_date: date = None, end_date: date = None,):
-    query = db.query(func.sum(Finances.amount))
+    query = db.query(func.sum(Finances.income))
     if start_date:
         query = query.filter(Finances.date >= start_date)
     if end_date:
@@ -26,12 +26,7 @@ def get_income(db= Depends(get_db),start_date: date = None, end_date: date = Non
     return query.scalar() or 0
 
 def get_expenses(db= Depends(get_db),start_date: date = None, end_date: date = None):
-    query = db.query(
-        func.sum(Finances.driver_salary +
-               Finances.fuel +
-               Finances.people_percent +
-               Finances.entry_percent)
-    )
+    query = db.query(func.sum(Finances.expenses))
     if start_date:
         query = query.filter(Finances.date >= start_date)
     if end_date:
